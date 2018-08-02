@@ -1,0 +1,28 @@
+{
+  "name": "head-smart",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smedlang/CheckYoSelf.git"
+  },
+  "author": "",
+  "license": "ISA",
+  "bugs": {
+    "url": "https://github.com/smedlang/CheckYoSelf/issues"
+  },
+  "homepage": "https://github.com/smedlang/CheckYoSelf#readme",
+  "dependencies": {
+    "express": "^4.16.3",
+    "express-validator": "^5.2.0",
+    "mongoose": "^5.2.3",
+    "mongoose-friends": "^0.2.5",
+    "underscore": "^1.9.1"
+  },
+  "devDependencies": {},
+  "description": ""
+}
