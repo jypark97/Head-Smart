@@ -326,9 +326,9 @@ app.post('/:userid/deleteSuggestion', (req, res) => {
   User.findById(userid)
   .then(result => {
     result.suggestions = result.suggestions.filter(sug => sug.name !== suggestionToDelete);
-    console.log(result.suggestions)
-    res.json({"status": 200});
-    user.save();
+
+    res.json({"status": 200, "suggestions": result.suggestions});
+    result.save();
   }).catch(err=> res.json({"error": err}));
 })
 
