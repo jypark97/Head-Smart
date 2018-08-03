@@ -214,7 +214,7 @@ app.post('/register', (req, res)=> {
       newUser.save()
       .then(result => {
         console.log(result);
-        res.json({"status": 200});
+        res.json(result);
       })
       .catch(err => res.status(400).json({"error":err}));
     }
@@ -265,6 +265,21 @@ app.get('/:userid/dailyLogs', (req, res)=> {
   })
   .catch(err => res.status(400).json({"error": err}));
 });
+
+app.get('/:userid/showSuggestions', (req, res) => {
+  User.findById(req.params.userid)
+  .then(result => {
+    let suggestions = [];
+    result.suggestions.map(sug => {
+      suggestions.push({
+        "name":sug.name,
+        "description":sug.description
+      })
+    })
+    res.json(suggestions)
+  })
+  .catch(err => res.status(400).json({"error": err}))
+})
 
 
 app.get('/:userid/stats', async (req, res) => {
