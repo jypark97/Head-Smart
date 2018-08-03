@@ -41,7 +41,6 @@ var getLogCount = (userId) => {
   })
   .then(results => {
     let count = results.length
-    console.log('count is', count)
     return count;
   }).catch(err => console.log (err));
 }
@@ -58,7 +57,6 @@ var getMostUsedSuggestion = (userId) => {
         name = sug.name;
       }
     })
-    console.log('most used is', name)
     return name;
   }).catch(err => console.log (err));
 }
@@ -84,7 +82,6 @@ var getTopEmos = (userId) => {
     });
     let uniqueEmos = _.unique(emos, true)
     var topEmos = uniqueEmos.slice(0, 5);
-    console.log('topEmos', topEmos);
     return topEmos;
   }).catch(err => console.log (err));
 }
@@ -112,7 +109,6 @@ var getTopReasons = (userId) => {
     });
     let uniqueReasons = _.unique(reasons, true);
     let topReasons = uniqueReasons.slice(0, 5);
-    console.log('top reasons is ', topReasons)
     return topReasons;
   }).catch(err => console.log (err));
 }
@@ -314,7 +310,7 @@ app.post('/:userid/addSuggestion', (req, res) => {
     console.log(sugs)
     user.suggestions = sugs;
     user.save()
-    res.json({"status": 200});
+    res.json({"status": 200, "suggestions": sugs});
   }).catch(err => res.json({'error': err}))
 })
 
@@ -341,17 +337,13 @@ app.post('/:userid/reEvaluate', (req, res)=> {
   DailyLog.find({
     owner: req.params.userid
   }).then(results => {
-    console.log('most recent log is ----------------' + results[results.length-1])
     results[results.length-1].newDetailedEmotions = newDetailedEmotions;
     results[results.length-1].completedSuggestion = completedSuggestion;
-    console.log('most recent UPDATED log is ----------------' + results[results.length-1])
     return results[results.length-1].save()
   }).then(() => {
-    console.log("IN THE USER PART")
     User.findById(req.params.userid)
     .then(user=> {
       let updatedSuggestions = [];
-      console.log('score is --------------' + score)
       user.suggestions.forEach(sug => {
         if (sug.name !== completedSuggestion){
           updatedSuggestions.push(sug);
@@ -359,7 +351,6 @@ app.post('/:userid/reEvaluate', (req, res)=> {
           let oldAverage = Number(sug.count) * Number(sug.score);
           let newCount = Number(sug.count)+1;
           let newScore = ((Number (oldAverage) + Number(req.body.score))/newCount);
-          console.log(oldAverage, newCount, newScore);
           updatedSuggestions.push({
             tags: sug.tags,
             _id: sug._id,
@@ -387,7 +378,6 @@ app.post('/:userid/reEvaluate', (req, res)=> {
       results[results.length-1].journalBody = journalBody;
       results[results.length-1].save()
       res.json({"status": 200});
-      console.log(results[results.length-1]);
     }).catch(err=> res.json({"error": err}));
   });
 
@@ -479,7 +469,6 @@ app.post('/:userid/reEvaluate', (req, res)=> {
   **/
 
   app.post('/:userid/friendRequestSend', (req, res) => {
-    console.log('in friend request send')
     User.findOne({name: req.body.name, phoneNumber: req.body.phoneNumber})
     .then((result) => User.requestFriend(req.params.userid, result._id))
     .then(() => {
