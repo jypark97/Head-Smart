@@ -369,94 +369,83 @@ app.post('/:userid/reEvaluate', (req, res)=> {
 })
 
 
-  app.post('/:userid/addJournal', (req, res)=> {
-    let journalBody = req.body.journalBody;
-    DailyLog.find({
-      owner: req.params.userid
+app.post('/:userid/newLog', (req, res) => {
+  let error = '';
+  let userid = req.params.userid;
+  let color = req.body.value;
+  let oldDetailedEmotions = req.body.emotions;
+  let reasons = req.body.reasons;
+  let journalBody = req.body.journalBody;
+
+
+  console.log('value backend is ---------' + color)
+  console.log('journal body backend is ---------' + journalBody)
+
+  let newDailyLog = new DailyLog({
+    owner: userid,
+    journalBody: journalBody,
+    oldDetailedEmotions: oldDetailedEmotions,
+    emotionColor: color,
+    reasons: reasons,
+    creationTime: new Date()
+  });
+
+  newDailyLog.save(err => error=err);
+  console.log('saved!');
+
+
+
+  //sorting all emotions into the big 5
+  oldDetailedEmotions.forEach(emotion => {
+    _.forEach(emotionInfo, bigEmotion => {
+      if(bigEmotion.items.includes(emotion.name)) {
+        bigEmotion.sum += emotion.intensity
+      }
     })
-    .then(results => {
-      results[results.length-1].journalBody = journalBody;
-      results[results.length-1].save()
-      res.json({"status": 200});
-    }).catch(err=> res.json({"error": err}));
   });
 
+  //average for each of the big 5
+  emotionInfo.forEach(emotion => {
+    emotion.average = emotion.sum / emotion.items.length
+  });
 
-  app.post('/:userid/newLog', (req, res) => {
-    let error = '';
-    let userid = req.params.userid;
-    let color = req.body.color;
-    let oldDetailedEmotions = req.body.emotions;
-    let reasons = req.body.reasons;
-    let wantSuggestion = req.body.wantSuggestion;
-
-    let newDailyLog = new DailyLog({
-      owner: userid,
-      journalBody: '',
-      oldDetailedEmotions: oldDetailedEmotions,
-      emotionColor: color,
-      reasons: reasons,
-      creationTime: new Date(),
-      completedSuggestion: wantSuggestion ? '' : 'none'
-    });
-
-    newDailyLog.save(err=> error=err);
-    console.log('saved!');
+  //sort emotionInfo by highest average (highest = most experienced emotion)
+  emotionInfo.sort((a, b) => (b.average - a.average));
+  let e1=emotionInfo[0].name;
+  let e2=emotionInfo[1].name;
 
 
-    //sorting all emotions into the big 5
-    oldDetailedEmotions.forEach(emotion => {
-      _.forEach(emotionInfo, bigEmotion => {
-        if(bigEmotion.items.includes(emotion.name)) {
-          bigEmotion.sum += emotion.intensity
-        }
-      })
-    });
+  if (e1 === 'happy'){
+    res.json('you are happy you donut need our help!');
+  }else{
+    let suggestionsByOwner = [];
 
-    //average for each of the big 5
-    emotionInfo.forEach(emotion => {
-      emotion.average = emotion.sum / emotion.items.length
-    });
-
-    //sort emotionInfo by highest average (highest = most experienced emotion)
-    emotionInfo.sort((a, b) => (b.average - a.average));
-    let e1=emotionInfo[0].name;
-    let e2=emotionInfo[1].name;
-
-
-    if (!wantSuggestion || e1 === 'happy'){
-      res.json({
-        "suggestions": [],
-        "log": newDailyLog
+    //setting this person's suggestions to suggestionsByOwner
+    User.findById(userid)
+    .then(user=> {
+      suggestionsByOwner = user.suggestions;
+      let suggestionsByEmotion = suggestionsByOwner.filter(function(suggestion){
+        return suggestion.tags.includes(e1) || suggestion.tags.includes(e2);
       });
-    }else{
-      let suggestionsByOwner = [];
-
-      //setting this person's suggestions to suggestionsByOwner
-      User.findById(userid)
-      .then(user=> {
-        suggestionsByOwner = user.suggestions;
-        let suggestionsByEmotion = suggestionsByOwner.filter(function(suggestion){
-          return suggestion.tags.includes(e1) || suggestion.tags.includes(e2);
+      suggestionsByEmotion.sort((a,b) => b.score - a.score);
+      if (error){
+        res.json({"error": error});
+      }else{
+        suggestionsByEmotion = suggestionsByEmotion.map((sug)=> {
+          return {
+            name: sug.name,
+            description: sug.description
+          }
         });
-        suggestionsByEmotion.sort((a,b) => b.score - a.score);
-        if (error){
-          res.json({"error": error});
-        }else{
-          suggestionsByEmotion = suggestionsByEmotion.map((sug)=> {
-            return {
-              name: sug.name,
-              description: sug.description
-            }
-          });
-          let topRecs = suggestionsByEmotion.slice(0,3)
-          res.json({
-            suggestion: topRecs
-          });
-        }
-      }).catch (err=> error= err);
-    }
-  });
+        let topRecs = suggestionsByEmotion.slice(0,3)
+        console.log('suggestions are ------------' + topRecs)
+        res.json({
+          suggestion: topRecs
+        });
+      }
+    }).catch (err=> error= err);
+  }
+});
 
 
 
