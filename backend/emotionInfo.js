@@ -1,12 +1,12 @@
 let emotionInfo = [{
   name: "anger",
   sum: 0,
-  items: ["anger", "irritated", "frustrated", "annoyed"]
+  items: ["angry", "irritated", "frustrated", "annoyed"]
 },
 {
   name: "sadness",
   sum: 0,
-  items: ["depressed", "sadness", "empty", "gloomy", "hopeless"]
+  items: ["depressed", "sad", "empty", "gloomy", "hopeless"]
 },
 {
   name: "anxiety",
