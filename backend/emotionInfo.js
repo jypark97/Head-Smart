@@ -11,7 +11,7 @@ let emotionInfo = [{
 {
   name: "anxiety",
   sum: 0,
-  items: ["anxiety", "afraid", "worried", "nervous", "panicked"]
+  items: ["anxious", "afraid", "worried", "nervous", "panicked"]
 },
 {
   name: "guilt",

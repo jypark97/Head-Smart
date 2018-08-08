@@ -51,17 +51,9 @@ var getMostUsedSuggestion = (userId) => {
   console.log('in most used')
   return User.findById(userId)
   .then(user => {
-    let highest = 0;
-    let name = '';
-    user.suggestions.forEach(sug => {
-      if(sug.count > highest){
-        console.log('high count is -------' + sug.count)
-        console.log('high count is -------' + sug.name)
-        highest = sug.count;
-        name = sug.name;
-      }
-    })
-    return name;
+    let sugs = user.suggestions.slice();
+    sugs.sort((a,b) => b.count - a.count);
+    return sugs[0].name;
   }).catch(err => console.log (err));
 }
 
@@ -74,23 +66,20 @@ var getTopEmos = (userId) => {
     owner: userId
   })
   .then(logs => {
-    let emos = [];
+    let emoCounter = {}
     logs.forEach(log => {
-      emos.concat(log.oldDetailedEmotions.name)
+      log.oldDetailedEmotions.forEach(emo => {
+        emoCounter[emo.name] = (emoCounter[emo.name] || 0) + emo.intensity
+      })
     })
-    console.log('emos array is -----------' + emos)
-    let counter = {}
-    emos.forEach(function(word) {
-      counter[word] = (counter[word] || 0) + 1;
+    var sortable = [];
+    for (var emo in emoCounter) {
+        sortable.push([emo, emoCounter[emo]]);
+    }
+    sortable.sort(function(a, b) {
+        return b[1] - a[1];
     });
-    console.log('counter object is ---------------' + counter)
-    emos.sort(function(x, y) {
-      return counter[y] - counter[x];
-    });
-    let uniqueEmos = _.unique(emos, true)
-    console.log('unique emos is ---------------' + uniqueEmos)
-    var topEmos = uniqueEmos.slice(0, 5);
-    return topEmos;
+    return sortable.slice(0, 5);
   }).catch(err => console.log (err));
 }
 /**
@@ -100,25 +89,26 @@ var getTopEmos = (userId) => {
 **/
 //most frequent reasons
 var getTopReasons = (userId) => {
-  console.log('in top reaons')
   return DailyLog.find({
     owner: userId
   })
   .then(logs => {
     let reasons = [];
     logs.forEach(log => {
-      reasons.concat(log.reasons)
+      reasons = [...reasons, ...log.reasons]
     })
     let counter = {}
-    reasons.forEach(function(word) {
+    reasons.forEach(word => {
       counter[word] = (counter[word] || 0) + 1;
     });
-    reasons.sort(function(x, y) {
-      return counter[y] - counter[x];
+    var sortable = [];
+    for (var reason in counter) {
+        sortable.push([reason, counter[reason]]);
+    }
+    sortable.sort(function(a, b) {
+        return b[1] - a[1];
     });
-    let uniqueReasons = _.unique(reasons, true);
-    let topReasons = uniqueReasons.slice(0, 5);
-    return topReasons;
+    return sortable.slice(0, 5);
   }).catch(err => console.log (err));
 }
 /**
@@ -128,63 +118,12 @@ var getTopReasons = (userId) => {
 //most productive activity
 var getMostProductiveActivity = (userId) => {
   console.log('in most productive')
-  let suggestions= [];
+  let suggestions = [];
   return User.findById(userId)
   .then(result => {
-    let sug = result.suggestions;
-    sug.forEach(suggestion => {
-      suggestions.push ({
-        name: suggestion.name,
-        avgDelta: 0,
-        count: 0
-      });
-    });
-    return suggestions;
-  }).then(suggestions => {
-    let happyBlock = emotionInfo[emotionInfo.length-1];
-    DailyLog.find({owner: userId})
-    .then(results => {
-      results.forEach(log => {
-        let oldHappySum = 0;
-        let oldNegSum = 0;
-        let oldDelta = 0;
-        let newHappySum = 0;
-        let newNegSum = 0;
-        let newDelta = 0;
-        let ULTIMATE_DELTA = 0;
-        log.oldDetailedEmotions.forEach(emotion => {
-          if (happyBlock.items.includes(emotion)){
-            happySum += emotion.intensity;
-          }else{
-            negSum += emotion.intensity;
-          }
-        })
-
-        log.newDetailedEmotions.forEach(emotion => {
-          if (happyBlock.items.includes(emotion)){
-            happySum += emotion.intensity;
-          }else{
-            negSum += emotion.intensity;
-          }
-        })
-
-        oldDelta = oldHappySum - oldNegSum;
-        newDelta = newHappySum - newNegSum;
-        ULTIMATE_DELTA = newDelta - oldDelta;
-
-        console.log("suggestions here is " + suggestions);
-
-        let oldAvg = suggestions[log.name].avgDelta * suggestions[log.name].count;
-        suggestions[log.name].count++;
-        suggestions[log.name].avgDelta = ((oldAvg + ULTIMATE_DELTA) / suggestions[log.name].count);
-        console.log("average is " + suggestions[log.name].avgDelta);
-      })
-    })
-
-    suggestions.sort((a,b) => b.avgDelta - a.avgDelta);
-    console.log('most productive activity', suggestions[0].name);
-    return suggestions[0].name;
-
+    let sugs = result.suggestions.slice();
+    sugs.sort((a,b) => b.score - a.score);
+    return sugs[0].name;
   }).catch(err => console.log({"error": err}));
 }
 
@@ -286,6 +225,17 @@ app.get('/:userid/showLastLog', (req, res)=> {
   .catch(err => res.status(400).json({"error": err}));
 });
 
+app.get('/:logid/showSingleLog', (req, res)=> {
+  console.log('in singlelog backend')
+  let logid = req.params.logid
+  DailyLog.findById(logid)
+  .then (result => {
+    console.log('log is _________' + result)
+    res.json(result);
+  })
+  .catch(err => res.status(400).json({"error": err}));
+});
+
 
 app.get('/:userid/showSuggestions', (req, res) => {
   User.findById(req.params.userid)
@@ -305,15 +255,12 @@ app.get('/:userid/showSuggestions', (req, res) => {
 
 app.get('/:userid/stats', async (req, res) => {
   let userid = req.params.userid;
-
-  console.log('in stats')
-
   res.json({
-    mostProductiveActivity: await getMostProductiveActivity(userid),
-    totalLogs: await getLogCount(userid),
-    topEmotions: await getTopEmos(userid),
-    topReasons: await getTopReasons(userid),
-    mostUsedSuggestion: await getMostUsedSuggestion(userid)
+    mostProductiveActivity: await getMostProductiveActivity(userid), //noGood
+    totalLogs: await getLogCount(userid), //good
+    topEmotions: await getTopEmos(userid), //idk
+    topReasons: await getTopReasons(userid), //idk
+    mostUsedSuggestion: await getMostUsedSuggestion(userid) //good
   });
 });
 
@@ -396,19 +343,6 @@ app.post('/:userid/reEvaluate', (req, res)=> {
     })
   }).catch(err => res.json({'error': err}));
 })
-
-  //
-  // app.post('/:userid/addJournal', (req, res)=> {
-  //   let journalBody = req.body.journalBody;
-  //   DailyLog.find({
-  //     owner: req.params.userid
-  //   })
-  //   .then(results => {
-  //     results[results.length-1].journalBody = journalBody;
-  //     results[results.length-1].save()
-  //     res.json({"status": 200});
-  //   }).catch(err=> res.json({"error": err}));
-  // });
 
 
   app.post('/:userid/newLog', (req, res) => {
