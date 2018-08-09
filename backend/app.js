@@ -431,7 +431,7 @@ app.post('/:userid/reEvaluate', (req, res)=> {
   **/
 
   app.post('/:userid/friendRequestSend', (req, res) => {
-    User.findOne({username: req.body.name})
+    User.findOne({username: req.body.username})
     .then((result) => {
       User.requestFriend(req.params.userid, result._id)
     })
