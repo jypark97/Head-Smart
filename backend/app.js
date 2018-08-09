@@ -10,6 +10,7 @@ var User = Models.User;
 var DailyLog = Models.DailyLog;
 var initialSuggestions = require('./initialSuggestions').initialSuggestions;
 var emotionInfo = require('./emotionInfo').emotionInfo;
+var Status = require("mongoose-friends").Status;
 
 
 mongoose.connect(process.env.MONGODB_URI);
@@ -430,12 +431,15 @@ app.post('/:userid/reEvaluate', (req, res)=> {
   **/
 
   app.post('/:userid/friendRequestSend', (req, res) => {
-    User.findOne({name: req.body.name, phoneNumber: req.body.phoneNumber})
-    .then((result) => User.requestFriend(req.params.userid, result._id))
+    User.findOne({username: req.body.name})
+    .then((result) => {
+      User.requestFriend(req.params.userid, result._id)
+    })
     .then(() => {
       res.json({"status": 200})
       console.log('sent!')
     })
+    .catch(err => console.log(err))
   })
 
 
@@ -447,23 +451,62 @@ app.post('/:userid/friendRequestAccept', (req, res) => {
  .catch((err) => console.log(err))
 })
 
+//Don't use the library!
 app.get('/:userid/getFriends', (req, res) => {
-  User.findById(req.params.userid)
+  User.findById(req.params.userid, {friends: 1})
   .then((result) => {
-    result.getAcceptedFriends()})
-  .then((result) => {
-  }).catch((err) => console.log(err))
+    let friendArr = [];
+    let name = '';
+    let emo = 'N/A';
+    let id = '';
+    result.friends.forEach(friend => {
+      friend.status === "accepted" ?
+      User.findById(friend._id)
+      .then(result => {
+        name = result.name
+        id = friend._id
+        return id
+      })
+      .then((id) => {
+        DailyLog.find({owner: id})
+      })
+      .then(results => {
+        if (results){
+          emo = results[results.length-1].emotionColor
+        }
+        return
+      })
+      .then(() => {
+        friendArr.push({
+          id: id,
+          name: name,
+          emo: emo
+        })
+        res.json(friendArr)
+      })
+      .catch(err => console.log(err))
+       : null
+    })
+  }).catch((err) => {
+    console.log(err)
+    res.json({"status": 400})
+  })
 })
 
 
-
-
-
-
 app.post('/:userid/removeFriend', (req, res) => {
-  User.removeFriend(req.params.userid, req.body.friendId)
-  .then((doc) => res.json({"friend": doc}))
-  .catch(err => res.json({"error": err}))
+  User.findById(req.body.id, {friends: 1})
+  .then(result => {
+    result.friends = _.reject(result.friends.slice(), (friend) => friend.id === req.params.userid);
+    result.save()
+    return User.findById(req.params.userid, {friends: 1})
+  })
+  .then(result => {
+    result.friends = _.reject(result.friends.slice(), (friend) => friend.id === req.body.id);
+    result.save()
+    res.json(result.friend);
+  })
+  .catch(err => console.log(err))
 })
 
 var port = process.env.PORT || 3000;
