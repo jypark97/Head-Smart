@@ -444,11 +444,9 @@ app.post('/:userid/reEvaluate', (req, res)=> {
 
 
 app.post('/:userid/friendRequestAccept', (req, res) => {
-  User.findOne({username: req.body.username})
-.then((result) => {
-  User.requestFriend(req.params.userid, result._id)})
+  User.requestFriend(req.params.userid, req.body.id)
   .then(() => res.json("request sent"))
- .catch((err) => console.log(err))
+  .catch((err) => console.log(err))
 })
 
 //Don't use the library!
@@ -493,6 +491,33 @@ app.get('/:userid/getFriends', (req, res) => {
   })
 })
 
+app.get('/:userid/getPending', (req, res) => {
+  User.findById(req.params.userid, {friends: 1})
+  .then((result) => {
+    let friendArr = [];
+    let name = '';
+    let id = '';
+    result.friends.forEach(friend => {
+      friend.status === "pending" ?
+      User.findById(friend._id)
+      .then(result => {
+        name = result.name
+        id = friend._id
+        friendArr.push({
+          id: id,
+          name: name,
+        })
+      })
+      .catch(err => console.log(err))
+       : null
+    })
+    res.json(friendArr)
+  }).catch((err) => {
+    console.log(err)
+    res.json({"status": 400})
+  })
+})
+
 
 app.post('/:userid/removeFriend', (req, res) => {
   User.findById(req.body.id, {friends: 1})
@@ -504,7 +529,7 @@ app.post('/:userid/removeFriend', (req, res) => {
   .then(result => {
     result.friends = _.reject(result.friends.slice(), (friend) => friend.id === req.body.id);
     result.save()
-    res.json(result.friend);
+    res.json({"status": 200});
   })
   .catch(err => console.log(err))
 })
