@@ -9,10 +9,7 @@ var userSchema = mongoose.Schema({
   email: String,
   username: String,
   password: String,
-  currentEmotionColor: {
-    type: Number,
-    public: Boolean
-  },                              //will have same value as most recent Emotion Color
+  currentEmotionColor: Number,                          //will have same value as most recent Emotion Color
   suggestions: [{
     name: String,
     description: String,

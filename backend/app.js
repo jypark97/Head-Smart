@@ -390,13 +390,20 @@ app.post('/:userid/reEvaluate', (req, res)=> {
 
 
     if (e1 === 'happy'){
-      res.json('you are happy you donut need our help!');
+      User.findById(userid)
+      .then(user=> {
+        user.currentEmotionColor = color
+        user.save()
+        res.json('you are happy you donut need our help!');
+      })
     }else{
       let suggestionsByOwner = [];
 
       //setting this person's suggestions to suggestionsByOwner
       User.findById(userid)
       .then(user=> {
+        user.currentEmotionColor = color
+        user.save()
         suggestionsByOwner = user.suggestions;
         let suggestionsByEmotion = suggestionsByOwner.filter(function(suggestion){
           return suggestion.tags.includes(e1) || suggestion.tags.includes(e2);
@@ -445,7 +452,7 @@ app.post('/:userid/reEvaluate', (req, res)=> {
 
 app.post('/:userid/friendRequestAccept', (req, res) => {
   User.requestFriend(req.params.userid, req.body.id)
-  .then(() => res.json("request sent"))
+  .then(() => res.json({"status": 200}))
   .catch((err) => console.log(err))
 })
 
@@ -454,37 +461,48 @@ app.get('/:userid/getFriends', (req, res) => {
   User.findById(req.params.userid, {friends: 1})
   .then((result) => {
     let friendArr = [];
-    let name = '';
-    let emo = 'N/A';
-    let id = '';
-    result.friends.forEach(friend => {
-      friend.status === "accepted" ?
-      User.findById(friend._id)
-      .then(result => {
-        name = result.name
-        id = friend._id
-        return id
-      })
-      .then((id) => {
-        DailyLog.find({owner: id})
-      })
-      .then(results => {
-        if (results){
-          emo = results[results.length-1].emotionColor
-        }
-        return
-      })
-      .then(() => {
+    // result.friends.forEach(friend => {
+    //   friend.status === 'accepted' ?
+    //   User.findById(friend._id)
+    //   .then(result => {
+    //     name = result.name
+    //     id = friend._id
+    //     return id
+    //   })
+    //   .then((id) => {
+    //     DailyLog.find({owner: id})
+    //   })
+    //   .then(results => {
+    //     if (results){
+    //       emo = results[results.length-1].emotionColor
+    //     }
+    //     return
+    //   })
+    //   .then(() => {
+    //     friendArr.push({
+    //       id: id,
+    //       name: name,
+    //       emo: emo
+    //     })
+    //   })
+    //   .catch(err => console.log(err))
+    //    : null
+    // })
+    // res.json({"friends": friendArr})
+    let accepted = _.filter(result.friends, friend => friend.status === 'accepted')
+    Promise.all(accepted.map(friend => User.findById(friend._id)))
+    .then(results => {
+      results.forEach(friend => {
         friendArr.push({
-          id: id,
-          name: name,
-          emo: emo
+          name: friend.name,
+          id: friend._id,
+          emo: friend.currentEmotionColor
         })
-        res.json(friendArr)
       })
-      .catch(err => console.log(err))
-       : null
+      return friendArr
     })
+    .then(Arr => res.json(friendArr))
+    .catch(err => console.log(err))
   }).catch((err) => {
     console.log(err)
     res.json({"status": 400})
@@ -492,27 +510,52 @@ app.get('/:userid/getFriends', (req, res) => {
 })
 
 app.get('/:userid/getPending', (req, res) => {
+  let friendArr = [];
   User.findById(req.params.userid, {friends: 1})
   .then((result) => {
-    let friendArr = [];
-    let name = '';
-    let id = '';
-    result.friends.forEach(friend => {
-      friend.status === "pending" ?
+    // let name = '';
+    // let id = '';
+    // result.friends.forEach(friend => {
+    //   friend.status === 'pending' ?
+    //   User.findById(friend._id)
+    //   .then(result => {
+    //     name = result.name
+    //     id = friend._id
+    //     friendArr.push({
+    //       id: id,
+    //       name: name,
+    //     })
+    //   })
+    //   .catch(err => console.log(err))
+    //    : friendArr = [];
+    // })
+    //
+    // res.json({"pending": friendArr})
+  let filtered =  _.filter(result.friends, friend => friend.status === 'pending')
+  console.log(filtered);
+  return filtered
+  })
+  .then(arr => {
+    console.log('arr', arr)
+    return Promise.all(arr.map(friend => {
       User.findById(friend._id)
-      .then(result => {
-        name = result.name
-        id = friend._id
-        friendArr.push({
-          id: id,
-          name: name,
-        })
+    }))
+  })//result of Promise.all is undefined
+  .then(result => {
+    console.log('friends Arr', result)
+    result.forEach(friend => {
+      console.log('friend', friend)
+      friendArr.push({
+        id: friend._id,
+        name: friend.name
       })
-      .catch(err => console.log(err))
-       : null
     })
-    res.json(friendArr)
-  }).catch((err) => {
+    return friendArr
+  })
+  .then(result => {
+    res.json(result)
+  })
+  .catch((err) => {
     console.log(err)
     res.json({"status": 400})
   })
