@@ -1,17 +1,19 @@
 "use strict";
-
 var _ = require('underscore');
 var express = require('express');
 var validator = require('express-validator');
 var app=express();
 var mongoose= require('mongoose');
+var passport = require('passport')
+var cookieSession = require('cookie-session');
 var Models = require('./models');
 var User = Models.User;
 var DailyLog = Models.DailyLog;
 var initialSuggestions = require('./initialSuggestions').initialSuggestions;
 var emotionInfo = require('./emotionInfo').emotionInfo;
-var Status = require("mongoose-friends").Status;
-
+const localStrategy = require ('passport-local').Strategy;
+var hashPassword = (password) => (password + process.env.SECRETHASH );
+// require('./services/passport.js')
 
 mongoose.connect(process.env.MONGODB_URI);
 
@@ -29,6 +31,43 @@ var bodyParser = require('body-parser');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(cookieSession({
+  maxAge: 30 * 24 * 60 * 60 * 1000,
+  keys: [process.env.COOKIEKEY]
+}))
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser((user, done) => {
+  done(null, user.id)
+})
+
+passport.deserializeUser((id, done) => {
+  User.findById(id)
+  .then(user => {
+    if(!user) {
+      return done('err')
+    }
+    done(null, user)
+  })
+})
+
+passport.use(new localStrategy(
+  function(username, password, done) {
+    User.findOne({username: username})
+    .then(user => {
+      if(!user){
+        return done(null, false)
+      }
+      if(user.password !== hashPassword(password)){
+        return done(null, false)
+      }
+      return done(null, user)
+    })
+  }
+))
 
 /**
 ------------------HELPER FUNCTIONS --------------
@@ -133,8 +172,12 @@ var getMostProductiveActivity = (userId) => {
 **/
 
 
+app.post('/login', passport.authenticate('local', { failureRedirect: '/'}), (req, res) => {
+  res.send(req.user._id);
+})
+
+
 app.get('/', function(req, res){
-  res.send('hello');
 })
 
 app.post('/register', (req, res)=> {
@@ -152,6 +195,8 @@ app.post('/register', (req, res)=> {
         name: name,
         username: username,
         password: password,
+        phoneNumber: phoneNumber,
+        email: email,
         suggestions: initialSuggestions,
         friends: []
       });
@@ -168,21 +213,6 @@ app.post('/register', (req, res)=> {
     }
 
   }).catch(err=> res.json({"error": err}));
-});
-
-
-app.post('/login', (req, res)=> {
-  let username = req.body.username;
-  let password = req.body.password;
-
-  User.findOne({username: username})
-  .then(result=> {
-    if (result.password === hashPassword(password)){
-      console.log('id', result._id);
-      res.json({"userid": result._id});
-    }
-  })
-  .catch(err => res.status(400).json({"error": err}));
 });
 
 
@@ -535,7 +565,7 @@ app.get('/:userid/getPending', (req, res) => {
   console.log(filtered);
   return filtered
   })
-  .then(arr => {
+  .then((arr) => {
     console.log('arr', arr)
     return Promise.all(arr.map(friend => {
       User.findById(friend._id)
