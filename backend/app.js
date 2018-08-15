@@ -531,7 +531,7 @@ app.get('/:userid/getFriends', (req, res) => {
       })
       return friendArr
     })
-    .then(Arr => res.json(friendArr))
+    .then(Arr => res.json(Arr))
     .catch(err => console.log(err))
   }).catch((err) => {
     console.log(err)
