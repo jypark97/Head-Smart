@@ -41,14 +41,15 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 passport.serializeUser((user, done) => {
-  done(null, user.id)
+  done(null, user._id)
 })
 
 passport.deserializeUser((id, done) => {
   User.findById(id)
   .then(user => {
     if(!user) {
-      return done('err')
+      console.log('hi')
+      return done(null, null)
     }
     done(null, user)
   })
@@ -59,11 +60,14 @@ passport.use(new localStrategy(
     User.findOne({username: username})
     .then(user => {
       if(!user){
+        console.log('1')
         return done(null, false)
       }
       if(user.password !== hashPassword(password)){
+        console.log('2')
         return done(null, false)
       }
+      console.log('3')
       return done(null, user)
     })
   }
@@ -72,8 +76,6 @@ passport.use(new localStrategy(
 /**
 ------------------HELPER FUNCTIONS --------------
 **/
-var hashPassword = (password) => (password + process.env.SECRETHASH );
-
 //total logs
 var getLogCount = (userId) => {
   console.log('in log count')
@@ -178,9 +180,12 @@ app.post('/login', passport.authenticate('local', { failureRedirect: '/'}), (req
 
 
 app.get('/', function(req, res){
+  console.log('issue')
+  res.send('error')
 })
 
 app.post('/register', (req, res)=> {
+  console.log('hello')
   let name = req.body.name;
   let username = req.body.username;
   let password = hashPassword(req.body.password);
@@ -204,11 +209,12 @@ app.post('/register', (req, res)=> {
       newUser.save()
       .then(result => {
         console.log(result);
-        res.json(result);
+        res.json(result._id);
       })
-      .catch(err => res.status(400).json({"error":err}));
+      .catch(err => res.json(err));
     }
     else {
+      console.log('error')
       res.json({"error": 'username is already taken!'});
     }
 
@@ -481,9 +487,11 @@ app.post('/:userid/reEvaluate', (req, res)=> {
 
 
 app.post('/:userid/friendRequestAccept', (req, res) => {
+  console.log('req.params.id is' + req.params.userid + 'req.body.id is' + req.body.id)
   User.requestFriend(req.params.userid, req.body.id)
-  .then(() => res.json({"status": 200}))
-  .catch((err) => console.log(err))
+  res.json({"status": 200})
+  // .then(() => res.json({"status": 200}))
+  // .catch((err) => console.log(err))
 })
 
 //Don't use the library!
@@ -539,6 +547,8 @@ app.get('/:userid/getFriends', (req, res) => {
   })
 })
 
+
+
 app.get('/:userid/getPending', (req, res) => {
   let friendArr = [];
   User.findById(req.params.userid, {friends: 1})
@@ -562,17 +572,14 @@ app.get('/:userid/getPending', (req, res) => {
     //
     // res.json({"pending": friendArr})
   let filtered =  _.filter(result.friends, friend => friend.status === 'pending')
-  console.log(filtered);
   return filtered
   })
   .then((arr) => {
-    console.log('arr', arr)
     return Promise.all(arr.map(friend => {
-      User.findById(friend._id)
+      return User.findById(friend._id)
     }))
   })//result of Promise.all is undefined
   .then(result => {
-    console.log('friends Arr', result)
     result.forEach(friend => {
       console.log('friend', friend)
       friendArr.push({
@@ -586,7 +593,7 @@ app.get('/:userid/getPending', (req, res) => {
     res.json(result)
   })
   .catch((err) => {
-    console.log(err)
+    console.log(err.message)
     res.json({"status": 400})
   })
 })
