@@ -121,7 +121,11 @@ var getTopEmos = (userId) => {
     sortable.sort(function(a, b) {
         return b[1] - a[1];
     });
-    return sortable.slice(0, 5);
+    let sorted = []
+    for (let i = 0; i < 5; i++) {
+      sorted.push(sortable[i][0])
+    }
+    return sorted;
   }).catch(err => console.log (err));
 }
 /**
@@ -150,7 +154,11 @@ var getTopReasons = (userId) => {
     sortable.sort(function(a, b) {
         return b[1] - a[1];
     });
-    return sortable.slice(0, 5);
+    let sorted = []
+    for (let i = 0; i < 3; i++) {
+      sorted.push(sortable[i][0])
+    }
+    return sorted;
   }).catch(err => console.log (err));
 }
 /**
