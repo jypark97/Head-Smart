@@ -108,6 +108,7 @@ var getTopEmos = (userId) => {
     owner: userId
   })
   .then(logs => {
+    console.log('logs are' + logs)
     let emoCounter = {}
     logs.forEach(log => {
       log.oldDetailedEmotions.forEach(emo => {
@@ -115,6 +116,7 @@ var getTopEmos = (userId) => {
       })
     })
     var sortable = [];
+    console.log('emoCounter is' + JSON.stringify(emoCounter))
     for (var emo in emoCounter) {
         sortable.push([emo, emoCounter[emo]]);
     }
@@ -122,7 +124,17 @@ var getTopEmos = (userId) => {
         return b[1] - a[1];
     });
     let sorted = []
-    for (let i = 0; i < 5; i++) {
+    let len = 0;
+    if (sortable.length >= 5){
+      len = 5
+    }
+    else {
+      len = sortable.length
+    }
+    for (let i = 0; i < len; i++) {
+      sorted.push(sortable[i][0])
+    }
+    for (let i = 0; i < len; i++) {
       sorted.push(sortable[i][0])
     }
     return sorted;
@@ -155,7 +167,14 @@ var getTopReasons = (userId) => {
         return b[1] - a[1];
     });
     let sorted = []
-    for (let i = 0; i < 3; i++) {
+    let len = 0
+    if (sortable.length >= 3){
+      len = 3
+    }
+    else {
+      len = sortable.length
+    }
+    for (let i = 0; i < len; i++) {
       sorted.push(sortable[i][0])
     }
     return sorted;
@@ -167,7 +186,6 @@ var getTopReasons = (userId) => {
 **/
 //most productive activity
 var getMostProductiveActivity = (userId) => {
-  console.log('in most productive')
   let suggestions = [];
   return User.findById(userId)
   .then(result => {
@@ -188,12 +206,10 @@ app.post('/login', passport.authenticate('local', { failureRedirect: '/'}), (req
 
 
 app.get('/', function(req, res){
-  console.log('issue')
   res.send('error')
 })
 
 app.post('/register', (req, res)=> {
-  console.log('hello')
   let name = req.body.name;
   let username = req.body.username;
   let password = hashPassword(req.body.password);
@@ -216,13 +232,11 @@ app.post('/register', (req, res)=> {
 
       newUser.save()
       .then(result => {
-        console.log(result);
         res.json(result._id);
       })
       .catch(err => res.json(err));
     }
     else {
-      console.log('error')
       res.json({"error": 'username is already taken!'});
     }
 
@@ -258,7 +272,6 @@ app.get('/:userid/oldLogs', (req, res)=> {
 
 //to get a single log...for "show log"
 app.get('/:userid/showLastLog', (req, res)=> {
-  console.log('in showlog backend')
   let userId = req.params.userid
   DailyLog.find({
     owner: userId
@@ -271,11 +284,9 @@ app.get('/:userid/showLastLog', (req, res)=> {
 });
 
 app.get('/:logid/showSingleLog', (req, res)=> {
-  console.log('in singlelog backend')
   let logid = req.params.logid
   DailyLog.findById(logid)
   .then (result => {
-    console.log('log is _________' + result)
     res.json(result);
   })
   .catch(err => res.status(400).json({"error": err}));
@@ -326,7 +337,6 @@ app.post('/:userid/addSuggestion', (req, res) => {
       score: 1,
       tags: tags
     });
-    console.log(sugs)
     user.suggestions = sugs;
     user.save()
     res.json({"status": 200, "suggestions": sugs});
@@ -367,11 +377,9 @@ app.post('/:userid/reEvaluate', (req, res)=> {
         if (sug.name !== completedSuggestion){
           updatedSuggestions.push(sug);
         }else{
-          console.log('sug that was used is ----------' + sug.name + completedSuggestion)
           let oldAverage = Number(sug.count) * Number(sug.score);
           let newCount = Number(sug.count)+1;
           let newScore = ((Number (oldAverage) + Number(req.body.score))/newCount);
-          console.log('old average is ----' + oldAverage + 'new count is ----' + newCount + 'newScore is ----' + newScore)
           updatedSuggestions.push({
             tags: sug.tags,
             _id: sug._id,
@@ -495,7 +503,6 @@ app.post('/:userid/reEvaluate', (req, res)=> {
 
 
 app.post('/:userid/friendRequestAccept', (req, res) => {
-  console.log('req.params.id is' + req.params.userid + 'req.body.id is' + req.body.id)
   User.requestFriend(req.params.userid, req.body.id)
   res.json({"status": 200})
   // .then(() => res.json({"status": 200}))
@@ -589,7 +596,6 @@ app.get('/:userid/getPending', (req, res) => {
   })//result of Promise.all is undefined
   .then(result => {
     result.forEach(friend => {
-      console.log('friend', friend)
       friendArr.push({
         id: friend._id,
         name: friend.name
