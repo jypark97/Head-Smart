@@ -5,8 +5,6 @@ var friends = require('mongoose-friends');
 
 var userSchema = mongoose.Schema({
   name: String,
-  phoneNumber: String,
-  email: String,
   username: String,
   password: String,
   currentEmotionColor: Number,                          //will have same value as most recent Emotion Color

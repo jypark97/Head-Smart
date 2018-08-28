@@ -2,7 +2,7 @@
 var _ = require('underscore');
 var express = require('express');
 var validator = require('express-validator');
-var app=express();
+var app = express();
 var mongoose= require('mongoose');
 var passport = require('passport')
 var cookieSession = require('cookie-session');
@@ -213,8 +213,6 @@ app.post('/register', (req, res)=> {
   let name = req.body.name;
   let username = req.body.username;
   let password = hashPassword(req.body.password);
-  let email = req.body.email;
-  let phoneNumber = req.body.phoneNumber;
 
   User.findOne({username: username})
   .then(result => {
@@ -224,8 +222,6 @@ app.post('/register', (req, res)=> {
         name: name,
         username: username,
         password: password,
-        phoneNumber: phoneNumber,
-        email: email,
         suggestions: initialSuggestions,
         friends: []
       });
