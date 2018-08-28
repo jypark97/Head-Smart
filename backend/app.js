@@ -48,7 +48,6 @@ passport.deserializeUser((id, done) => {
   User.findById(id)
   .then(user => {
     if(!user) {
-      console.log('hi')
       return done(null, null)
     }
     done(null, user)
@@ -60,14 +59,11 @@ passport.use(new localStrategy(
     User.findOne({username: username})
     .then(user => {
       if(!user){
-        console.log('1')
         return done(null, false)
       }
       if(user.password !== hashPassword(password)){
-        console.log('2')
         return done(null, false)
       }
-      console.log('3')
       return done(null, user)
     })
   }
@@ -78,7 +74,6 @@ passport.use(new localStrategy(
 **/
 //total logs
 var getLogCount = (userId) => {
-  console.log('in log count')
   return DailyLog.find({
     owner: userId
   })
@@ -90,7 +85,6 @@ var getLogCount = (userId) => {
 
 //most used suggestion
 var getMostUsedSuggestion = (userId) => {
-  console.log('in most used')
   return User.findById(userId)
   .then(user => {
     let sugs = user.suggestions.slice();
@@ -103,12 +97,10 @@ var getMostUsedSuggestion = (userId) => {
 
 //most frequent detailed emotions
 var getTopEmos = (userId) => {
-  console.log('in top emos')
   return DailyLog.find({
     owner: userId
   })
   .then(logs => {
-    console.log('logs are' + logs)
     let emoCounter = {}
     logs.forEach(log => {
       log.oldDetailedEmotions.forEach(emo => {
@@ -116,7 +108,6 @@ var getTopEmos = (userId) => {
       })
     })
     var sortable = [];
-    console.log('emoCounter is' + JSON.stringify(emoCounter))
     for (var emo in emoCounter) {
         sortable.push([emo, emoCounter[emo]]);
     }
@@ -347,7 +338,6 @@ app.post('/:userid/deleteSuggestion', (req, res) => {
   User.findById(userid)
   .then(result => {
     result.suggestions = result.suggestions.filter(sug => sug.name !== suggestionToDelete);
-
     res.json({"status": 200, "suggestions": result.suggestions});
     result.save();
   }).catch(err=> res.json({"error": err}));
