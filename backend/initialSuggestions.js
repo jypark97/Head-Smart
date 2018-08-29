@@ -1,41 +1,41 @@
 let initialSuggestions = [{
     name: 'Physical activity',
-    description: 'Go on a run, do a quick workout at home, or head to the gym!',
+    description: 'Go on a run or do a quick workout at home!',
     count: 1,
     score: 1,
     tags: ['sadness', 'guilt', 'shame', 'anger', 'anxiety']
   },
   {
     name: 'Watch something funny',
-    description: 'Watch a funny show or video to distract and make you smile.',
+    description: 'Watch a funny show or video to distract.',
     count: 1,
     score: 1,
     tags: ['sadness', 'anger']
   },
   {
     name: 'Gratitude list',
-    description: 'Make a list of at least 5 things that you like about yourself or are grateful for.',
+    description: 'Make a list of 10 things that you like about yourself and are grateful for.',
     count: 1,
     score: 1,
     tags: ['sadness', 'shame', 'guilt']
   },
   {
     name: 'Apology letter to self',
-    description: 'Write a letter to forgive yourself for something you did wrong',
+    description: 'Write a letter to forgive yourself for something you did wrong.',
     count: 1,
     score: 1,
     tags: ['shame', 'guilt']
   },
   {
     name: 'Apology letter to someone else',
-    description: 'Write a letter to apologize to someone else for something you did wrong',
+    description: 'Write a letter to apologize to someone else for something you did wrong.',
     count: 1,
     score: 1,
     tags: ['guilt']
   },
   {
     name: 'Check your magnification',
-    description: 'A quick exercise to see if you are being too hard on yourself...if the self-punishment fits the crime',
+    description: "Let's see if the self-punishment fits the crime",
     count: 1,
     score: 1,
     tags: ['shame', 'guilt']
@@ -49,14 +49,14 @@ let initialSuggestions = [{
   },
   {
     name: 'Listen to music',
-    description: 'Make sure the music fits how you’re feeling...for example, if you’re angry, blast it! If you’re anxious, try to actively listen to the lyrics or the instruments.',
+    description: 'We will make sure the music fits your mood.',
     count: 1,
     score: 1,
     tags: ['anxiety', 'anger', 'sadness']
   },
   {
     name: 'Take a shower',
-    description: 'If you’re angry, take a cold shower or splash cold water on your face. If you’re anxious or sad, take a warm shower or bath to relax.',
+    description: 'We will make sure the tempearture fits your mood.',
     count: 1,
     score: 1,
     tags: ['sadness', 'anxiety', 'anger']
@@ -76,22 +76,22 @@ let initialSuggestions = [{
     tags: ['anger']
   },
   {
-    name: 'Drinking something warm',
-    description: 'Make tea, hot milk, or hot cocoa to sip :) ',
+    name: 'Drink something warm',
+    description: 'Make tea, hot milk, or hot cocoa to sip',
     count: 1,
     score: 1,
     tags: ['sadness', 'anxiety']
   },
   {
     name: 'Grounding exercise',
-    description: 'A quick exercise to distract and calm down',
+    description: 'A quick exercise to distract',
     count: 1,
     score: 1,
     tags: ['anxiety']
   },
   {
     name: 'Eat!',
-    description: 'Make sure the food fits the feeling...for example, if angry, eat something sour. If sad or anxious, have a healthy snack.',
+    description: 'We will make sure the snack fits your mood.',
     count: 1,
     score: 1,
     tags: ['anxiety', 'sadness', 'anger']
